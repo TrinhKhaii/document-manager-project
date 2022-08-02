@@ -1,0 +1,180 @@
+-- Author: KhaiTT
+-- Time: 08/07/2022
+
+-- create table
+create table users (
+    id bigserial,
+    user_name varchar(50) not null,
+    is_delete bit(1) default b'0' not null,
+    primary key(id)
+)
+
+create table incoming_document(
+    id bigserial,
+    excerpt varchar(255) not null,
+    serial_number varchar(50) not null,
+    signing_date timestamp not null default LOCALTIMESTAMP(0),
+    signer_id bigint not null,
+    is_delete bit(1) default b'0' not null,
+    primary key(id),
+    foreign key(signer_id) references users(id)
+)
+
+create table rotation(
+    id bigserial,
+    incoming_document_id bigint not null,
+    sender_id bigint not null,
+    receiver_id bigint not null,
+    is_delete bit(1) default b'0' not null,
+    delivery_date timestamp not null default LOCALTIMESTAMP(0),
+    primary key(id),
+    foreign key(incoming_document_id) references incoming_document(id),
+    foreign key(sender_id) references users(id),
+    foreign key(receiver_id) references users(id)
+)
+
+-- USER:
+-- find all users:
+select * from users where is_delete = b'0' and users.user_name ilike '%%' order by id limit 20 offset 0
+
+select * from users where is_delete = b'0' order by id limit 2 offset 0
+
+-- count total record users:
+select count(*) from users where is_delete = b'0' and lower(users.user_name) like concat('%', '', '%')
+
+-- find all users with full text search:
+select * from users where is_delete = b'0' and to_tsvector(unaccent(users.user_name)) @@ to_tsquery(unaccent('khai')) limit 20 offset 0
+
+-- count total record users with full text search:
+select count(*) from users where is_delete = b'0' and to_tsvector(unaccent(users.user_name)) @@ to_tsquery(unaccent('khai')) limit 20 offset 0
+
+-- insert users:
+insert into users(user_name) values ('Nguyễn Trần Phương Anh')
+
+-- delete users:
+update users set is_delete = b'0' where id = 6;
+
+-- update users:
+update users set user_name = 'KhaiTT' where id = 1
+
+
+--INCOMING DOCUMENT:
+-- find all incoming document:
+select * from incoming_document where is_delete = b'0' and lower(excerpt) like lower('%%')
+and lower(serial_number) like lower('%%') and signing_date between cast('2000-01-01' as timestamp) and cast('2025-01-01' as timestamp)
+and signer_id in (select users.id from users where is_delete = b'0' and lower(user_name) like lower('%%')) order by id limit 20 offset 0;
+
+-- find all incoming document dto:
+select incoming_document.id, incoming_document.excerpt, incoming_document.serial_number, incoming_document.signing_date, users.id as signer_id, users.user_name as signer_name from incoming_document
+inner join users on incoming_document.signer_id = users.id where incoming_document.is_delete = b'0' and excerpt ilike '%%'
+and serial_number ilike '%%' and signing_date between cast('2000-01-01' as timestamp) and cast('2025-01-01' as timestamp)
+and users.user_name ilike '%%' order by incoming_document.id limit 20 offset 0 ;
+
+-- count total record incoming document:
+select count(*) from incoming_document inner join users on incoming_document.signer_id = users.id where incoming_document.is_delete = b'0' and excerpt ilike '%%'
+and serial_number like '%%' and signing_date between cast('2000-01-01' as timestamp) and cast('2025-01-01' as timestamp)
+and users.user_name like '%%' ;
+
+-- insert incoming document:
+insert into incoming_document(excerpt, serial_number, signing_date, signer_id) values
+('Hợp đồng A', '03/2022/Unitech', '2022-07-01 00:00:00', 1);
+
+-- delete incoming document:
+update incoming_document set is_delete = b'0' where id = 4;
+
+-- find incoming document by id:
+select * from incoming_document where is_delete = b'0' and id = 4;
+
+-- update incoming document:
+update incoming_document set excerpt = 'Hợp đồng B', serial_number = '05/2022/Unitech', signer_id = 3 where id = 3
+
+
+-- ROTATION:
+-- find all rotation:
+select * from rotation where is_delete = b'0'
+and incoming_document_id in (select incoming_document.id from incoming_document where is_delete = b'0'
+and lower(incoming_document.excerpt) like lower('%%'))
+and sender_id in (select users.id from users where is_delete = b'0' and lower(user_name) like lower('%%'))
+and receiver_id in (select users.id from users where is_delete = b'0' and lower(user_name) like lower('%%'))
+and delivery_date between cast('2000-07-01 00:00:00' as timestamp) and cast('3022-07-01 23:59:00' as timestamp)
+order by id limit 20 offset 0;
+
+-- find all rotation dto:
+select rotation.id, rotation.incoming_document_id, incoming_document.excerpt, rotation.sender_id, sender.user_name as sender_name,
+rotation.receiver_id, receiver.user_name as receiver_name, rotation.delivery_date from rotation
+inner join incoming_document on rotation.incoming_document_id = incoming_document.id
+inner join users as sender on rotation.sender_id = sender.id
+inner join users as receiver on rotation.receiver_id = receiver.id
+where rotation.is_delete = b'0' and incoming_document.is_delete = b'0' and incoming_document.excerpt ilike '%%'
+and sender.user_name ilike '%%'
+and receiver.user_name ilike '%%'
+and delivery_date between cast('2000-07-01 00:00:00' as timestamp) and cast('3022-07-01 23:59:00' as timestamp)
+order by rotation.id limit 20 offset 0
+
+-- count total record rotation:
+select count(*) from rotation
+inner join incoming_document on rotation.incoming_document_id = incoming_document.id
+inner join users as sender on rotation.sender_id = sender.id
+inner join users as receiver on rotation.receiver_id = receiver.id
+where rotation.is_delete = b'0'
+and delivery_date between cast('2022-07-02' as timestamp) and cast('2022-07-09' as timestamp)
+and incoming_document.is_delete = b'0' and incoming_document.excerpt ilike '%%'
+and sender.user_name ilike '%%'
+and receiver.user_name ilike '%%'
+
+-- find all rotation dto with full text search:
+select rotation.id, rotation.incoming_document_id, incoming_document.excerpt, rotation.sender_id, sender.user_name as sender_name,
+rotation.receiver_id, receiver.user_name as receiver_name, rotation.delivery_date from rotation
+inner join incoming_document on rotation.incoming_document_id = incoming_document.id
+inner join users as sender on rotation.sender_id = sender.id
+inner join users as receiver on rotation.receiver_id = receiver.id
+where rotation.is_delete = b'0' and incoming_document.is_delete = b'0'
+and to_tsvector(unaccent(incoming_document.excerpt) || ' ' || unaccent(sender.user_name) || ' ' || unaccent(receiver.user_name) || ' ' || to_char(delivery_date, 'yyyy-MM-dd hh:MM:ss')) @@ to_tsquery(unaccent('2022-07-01'))
+order by rotation.id limit 20 offset 0
+
+--count total record rotation dto with full text search:
+select count(*) from rotation
+inner join incoming_document on rotation.incoming_document_id = incoming_document.id
+inner join users as sender on rotation.sender_id = sender.id
+inner join users as receiver on rotation.receiver_id = receiver.id
+where rotation.is_delete = b'0' and incoming_document.is_delete = b'0'
+and to_tsvector(unaccent(incoming_document.excerpt) || ' ' || unaccent(sender.user_name) || ' ' || unaccent(receiver.user_name) || ' ' || to_char(delivery_date, 'yyyy-MM-dd hh:MM:ss')) @@ to_tsquery(unaccent('Khai'))
+
+-- create rotation:
+insert into rotation(incoming_document_id, sender_id, receiver_id, delivery_date) values
+(3, 3, 2, '2022-07-01 16:00:00');
+
+-- delete rotation:
+update rotation set is_delete = b'0' where id = 4
+
+-- select rotation:
+select * from rotation where is_delete = b'0' and id = 4
+
+-- update rotation:
+update rotation set incoming_document_id = 2, sender_id = 1, receiver_id = 1 where id = 4;
+
+-- Get the rotation list of any document:
+select rotation.id, incoming_document.excerpt, incoming_document.serial_number, incoming_document.signing_date,
+rotation.delivery_date, sender.user_name as sender, receiver.user_name as receiver, signer.user_name as signer
+from rotation
+join incoming_document on rotation.incoming_document_id = incoming_document.id
+join users as sender on rotation.sender_id = sender.id
+join users as receiver on rotation.receiver_id = receiver.id
+join users as signer on incoming_document.signer_id = signer.id
+where incoming_document.id = 1 and rotation.is_delete = b'0' and incoming_document.is_delete = b'0'
+and signer.is_delete = b'0' ;
+
+-- Statistics on the number of texts received by person:
+select users.user_name as receiver_name, count(receiver_id) as document_amount from rotation
+inner join users on rotation.receiver_id = users.id
+inner join incoming_document on rotation.incoming_document_id = incoming_document.id
+where users.is_delete = b'0' and incoming_document.is_delete = b'0'
+and rotation.is_delete = b'0'
+group by users.id
+order by users.id
+
+-- create unaccent for search Vietnamese:
+create extension unaccent
+
+
+

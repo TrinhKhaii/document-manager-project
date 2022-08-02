@@ -1,0 +1,50 @@
+Cho các table vanbanden (id,trichyeu,sokyhieu,ngayky,nguoiky,daxoa), nguoidung (id,ten,daxoa), luanchuyen (id,vanbandenid,nguoinhanid,nguoiguiid,ngaychuyen,daxoa)
+Viết các API sau:
+	- CRUD cho 3 bảng (chú ý có valid đầy đủ, đối với phần R (select) cần tìm kiếm đầy đủ các field của bảng)
+	- Lấy danh sách luân chuyển của một văn bản bất kỳ (thông tin văn bản, tên người nhận, tên người gửi, ngày chuyển)
+	- Thông kê số lượng văn bản nhận dc theo người
+	- FCM
+	- JasperReport
+
+# Task Spring:
+10/07/2022
+- Dùng maven: OK
+- Sử dụng EntityManager hoặc jdbc template: OK
+- Dùng id không lồng đối tượng trong đối tượng: OK
+- Chuyển hết validate vào 1 file (custom json validate spring): OK
+- Không dùng quan hệ trong entity (tự tạo db trước rồi ngầm hiểu quan hệ trọng Entity): OK
+- Xử lý nghiệp vụ trong service chứ kh dùng controller: OK
+- Kiểu ngày tháng trong Entity dùng Date, trong db dùng time without time zone (yyyy-MM-dd hh-mm-ss): OK
+- Sử dụng HashMap để truyền id: OK
+- Trả lỗi về cùng 1 đối tượng Response Object: OK
+- Transaction xử lý ở tầng service : OK
+- Làm kỹ lại phần phân trang và search nhiều trường (phân trang tại repo): OK
+- Đổi tên lại Dto -> Request: OK
+- join --> inner join: OK
+
+20/07/2022
+- Văn bản có nhiều người ký (dùng array ?)
+- Lấy ra record số lượng lớn (dùng mảng 2 chiều?)
+- Luân chuyển từ 1 người đến nhiều người: OK
+
+27/07/2022
+- Sử dụng caffeine cache trả dữ liệu giúp đỡ nặng server khi có nhiều request tới, trong vòng 5p reset: OK
+- Search bằng full text search: OK
+- Search ilike trong sql, tham số không được lồng hàm vd: lower(...) gây chậm chương trình: OK
+- Search tiếng việt: OK
+- Xem lại các bảng đã join thì không sử dụng subquery, trường hợp cần lắm mới sử dụng vì subquery làm chậm chương trình: OK
+- Kiểu dữ liệu để hết về kiểu nguyên thủy: OK
+- Jasper report trả về kiểu File: OK
+- Config tiếng việt cho Jasper Report PDF (simple blue): OK
+- Ví dụ câu where không có gì đằng sau thì để điều kiện where 1=1 tà đạo để cộng chuỗi có chữ AND phía sau kh bị lỗi: OK
+- Đổi lại cách viết null != tham số: OK
+- StringBuilder thay cho String với StringBuffer: OK
+- Logic câu query lấy ra người ký mặc dù đã xóa nhưng vẫn hiển thị ở văn bản đến hoặc luân chuyển: OK
+- Xem lại tự động tăng của id, custom annotation tự động tăng theo ý mình
+- Lưu ý xem lại ngoài Rowmapper ra còn cách gì khác ?
+
+
+# Task ReactJS:
+25/07/2022
+- Search bằng POST nhưng phải hiển thị param trên thanh url
+- Làm lại giao diện bằng ant
